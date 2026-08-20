@@ -9,7 +9,7 @@
     body { margin: 15px; background-color: #f1f5f9; color: #1e293b; }
     h1 { font-size: 1.35rem; color: #0f172a; display: flex; align-items: center; gap: 8px; margin-top: 0; }
     .status-online { display: inline-block; width: 10px; height: 10px; background: #22c55e; border-radius: 50%; }
-    .container { display: grid; grid-template-columns: 1.1fr 1.4fr; gap: 15px; }
+    .container { display: grid; grid-template-columns: 1.15fr 1.35fr; gap: 15px; }
     .card { background: #fff; padding: 16px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     .form-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
     input, select, button { padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; }
@@ -22,12 +22,12 @@
     button.edit-btn { background-color: #d97706; font-size: 0.75rem; padding: 3px 6px; }
     table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.8rem; }
     th, td { border: 1px solid #e2e8f0; padding: 6px; text-align: center; }
-    th { background-color: #f8fafc; color: #4a5568; position: sticky; top: 0; }
+    th { background-color: #f8fafc; color: #475569; position: sticky; top: 0; }
     .checkbox-group { display: flex; flex-direction: column; gap: 3px; text-align: left; font-size: 0.75rem; margin-top: 4px; }
-    .table-container { max-height: 520px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 4px; }
+    .table-container { max-height: 540px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 4px; }
     .badge { padding: 2px 7px; border-radius: 10px; font-size: 0.75rem; background: #ffedd5; color: #c2410c; font-weight: bold; }
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
-    .modal-content { background: white; padding: 20px; border-radius: 8px; width: 420px; max-width: 90%; }
+    .modal-content { background: white; padding: 20px; border-radius: 8px; width: 440px; max-width: 90%; }
   </style>
 </head>
 <body>
@@ -45,41 +45,59 @@
         </select>
       </label>
       <label>발생일시: <input type="datetime-local" id="eventTime"></label>
+      
       <label>위치/동: 
-        <select id="dongSelect" onchange="onLocationCategoryChange()">
+        <select id="dongSelect" onchange="onDongOrCategoryChange()">
           <option value="201동">201동</option>
           <option value="202동">202동</option>
           <option value="203동">203동</option>
           <option value="204동">204동</option>
           <option value="205동">205동</option>
           <option value="206동">206동</option>
-          <option value="지하주차장">지하주차장</option>
           <option value="관리동">관리동</option>
+          <option value="지하주차장">지하주차장</option>
         </select>
       </label>
+
       <label>구분:
-        <select id="placeType" onchange="onLocationCategoryChange()">
-          <option value="세대">세대 (4세대 일괄교체)</option>
-          <option value="계단">계단 감지기</option>
-          <option value="EV">E/V실 감지기</option>
-          <option value="프리액션TS">프리액션 T/S</option>
-          <option value="지하발신기">지하주차장 발신기</option>
-          <option value="지하감지기">지하주차장 감지기</option>
-          <option value="기타">기타 공용부</option>
-        </select>
+        <select id="placeType" onchange="onDongOrCategoryChange()"></select>
       </label>
-      <span id="stairFloorArea">
+
+      <!-- 동/계단/층 선택 동적 영역 -->
+      <span id="stairArea">
         <label>계단: 
-          <select id="stair">
+          <select id="stairSelect">
             <option value="1계단">1계단 (1~4호)</option>
             <option value="2계단">2계단 (5~8호)</option>
           </select>
         </label>
-        <label>층수: <input type="number" id="floor" placeholder="예: 23" style="width: 65px;"></label>
       </span>
-      <span id="customArea" style="display:none;">
-        <label>세부위치: <input type="text" id="detailPlace" placeholder="예: B3F C1주차장" style="width: 150px;"></label>
+
+      <span id="floorInputArea">
+        <label>층수: <input type="number" id="floorInput" placeholder="예: 4" style="width: 65px;"></label>
       </span>
+
+      <span id="stairRangeArea" style="display:none;">
+        <label>계단 층 범위: 
+          <select id="stairRangeSelect"></select>
+        </label>
+      </span>
+
+      <span id="manageDongFloorArea" style="display:none;">
+        <label>층수: 
+          <select id="manageFloorSelect">
+            <option value="B1F">B1F</option>
+            <option value="1F">1F</option>
+            <option value="2F">2F</option>
+            <option value="3F">3F</option>
+          </select>
+        </label>
+      </span>
+
+      <span id="parkingArea" style="display:none;">
+        <label>주차장 위치: <input type="text" id="parkingDetail" placeholder="예: B3F C1-12 앞" style="width: 150px;"></label>
+      </span>
+
       <button onclick="registerAlarmEvent()">작업목록 추가</button>
     </div>
   </div>
@@ -95,9 +113,10 @@
         <table>
           <thead>
             <tr>
-              <th style="width: 18%;">발생일시</th>
-              <th style="width: 24%;">발생장소</th>
-              <th style="width: 58%;">조치사항</th>
+              <th style="width: 15%;">발생일시</th>
+              <th style="width: 22%;">발생장소</th>
+              <th style="width: 53%;">조치사항</th>
+              <th style="width: 10%;">삭제</th>
             </tr>
           </thead>
           <tbody id="pendingList"></tbody>
@@ -145,11 +164,11 @@
             <option value="화재">화재</option>
           </select>
         </label>
-        <label>발생일시: <input type="text" id="editEventTime" style="width:100%;"></label>
+        <label>발생일자(YYYY-MM-DD): <input type="text" id="editEventTime" style="width:100%;"></label>
         <label>발생장소: <input type="text" id="editLocation" style="width:100%;"></label>
         <label>발생원인: <input type="text" id="editCause" style="width:100%;"></label>
         <label>조치사항: <textarea id="editActions" rows="3" style="width:100%;"></textarea></label>
-        <label>처리일자: <input type="text" id="editProcessDate" style="width:100%;"></label>
+        <label>처리일자(YYYY-MM-DD): <input type="text" id="editProcessDate" style="width:100%;"></label>
         <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:10px;">
           <button class="sub-btn" onclick="closeEditModal()">취소</button>
           <button onclick="saveEditHistory()">저장하기</button>
@@ -166,18 +185,100 @@
     let pendingData = {};
     let historyData = {};
 
-    function onLocationCategoryChange() {
-      const dong = document.getElementById('dongSelect').value;
-      const pType = document.getElementById('placeType').value;
-      const stairFloorArea = document.getElementById('stairFloorArea');
-      const customArea = document.getElementById('customArea');
+    // 동별 최고층 및 계단 정의
+    const DONG_CONFIG = {
+      "201동": { maxFloor: 19, stairs: ["1계단"], stairRanges: ["3F~8F", "13F~18F"] },
+      "202동": { maxFloor: 25, stairs: ["1계단", "2계단"], stairRanges: ["3F~13F", "18F~23F"] },
+      "203동": { 
+        maxFloor: 18, 
+        stairs: ["1계단", "2계단"], 
+        stairMaxFloor: { "1계단": 18, "2계단": 11 }, 
+        stairRanges: { "1계단": ["3F~8F", "3F~13F"], "2계단": ["3F~8F"] } 
+      },
+      "204동": { maxFloor: 25, stairs: ["1계단", "2계단"], stairRanges: ["3F~13F", "18F~23F"] },
+      "205동": { maxFloor: 25, stairs: ["1계단"], stairRanges: ["3F~13F", "18F~23F"] },
+      "206동": { maxFloor: 19, stairs: ["1계단"], stairRanges: ["3F~8F", "13F~18F"] }
+    };
 
-      if (dong === '지하주차장' || pType === '지하발신기' || pType === '지하감지기' || pType === '기타') {
-        stairFloorArea.style.display = 'none';
-        customArea.style.display = 'inline';
+    function onDongOrCategoryChange() {
+      const dong = document.getElementById('dongSelect').value;
+      const placeTypeSelect = document.getElementById('placeType');
+      const curPlaceType = placeTypeSelect.value;
+
+      // 1. 구분 드롭다운 항목 채우기
+      if (dong === '관리동') {
+        placeTypeSelect.innerHTML = `
+          <option value="소화전">소화전</option>
+          <option value="계단감지기">계단감지기</option>
+        `;
+      } else if (dong === '지하주차장') {
+        placeTypeSelect.innerHTML = `
+          <option value="감지기">감지기</option>
+          <option value="프리액션TS">프리액션 T/S</option>
+          <option value="발신기">발신기</option>
+        `;
       } else {
-        stairFloorArea.style.display = 'inline';
-        customArea.style.display = 'none';
+        placeTypeSelect.innerHTML = `
+          <option value="세대">세대 (4세대 일괄교체)</option>
+          <option value="계단감지기">계단감지기</option>
+          <option value="프리액션TS">프리액션 T/S</option>
+          <option value="EV감지기">E/V감지기</option>
+        `;
+      }
+
+      if (curPlaceType && placeTypeSelect.querySelector(`option[value="${curPlaceType}"]`)) {
+        placeTypeSelect.value = curPlaceType;
+      }
+
+      const pType = placeTypeSelect.value;
+      const stairArea = document.getElementById('stairArea');
+      const stairSelect = document.getElementById('stairSelect');
+      const floorInputArea = document.getElementById('floorInputArea');
+      const stairRangeArea = document.getElementById('stairRangeArea');
+      const stairRangeSelect = document.getElementById('stairRangeSelect');
+      const manageDongFloorArea = document.getElementById('manageDongFloorArea');
+      const parkingArea = document.getElementById('parkingArea');
+
+      // 계단 드롭다운 갱신
+      if (DONG_CONFIG[dong]) {
+        const availableStairs = DONG_CONFIG[dong].stairs;
+        stairSelect.innerHTML = availableStairs.map(s => `<option value="${s}">${s} (${s === '1계단' ? '1~4호' : '5~8호'})</option>`).join('');
+      }
+
+      // 화면 영역 보이기/숨기기 제어
+      stairArea.style.display = 'none';
+      floorInputArea.style.display = 'none';
+      stairRangeArea.style.display = 'none';
+      manageDongFloorArea.style.display = 'none';
+      parkingArea.style.display = 'none';
+
+      if (dong === '관리동') {
+        if (pType === '소화전') {
+          manageDongFloorArea.style.display = 'inline';
+        }
+      } else if (dong === '지하주차장') {
+        parkingArea.style.display = 'inline';
+      } else {
+        // 일반 동
+        if (pType === '세대') {
+          stairArea.style.display = 'inline';
+          floorInputArea.style.display = 'inline';
+        } else if (pType === '계단감지기') {
+          stairArea.style.display = 'inline';
+          stairRangeArea.style.display = 'inline';
+          
+          let ranges = DONG_CONFIG[dong].stairRanges;
+          if (dong === '203동') {
+            const st = stairSelect.value || '1계단';
+            ranges = DONG_CONFIG[dong].stairRanges[st] || ["3F~8F"];
+          }
+          stairRangeSelect.innerHTML = ranges.map(r => `<option value="${r}">${r}</option>`).join('');
+        } else if (pType === '프리액션TS') {
+          stairArea.style.display = 'inline';
+          floorInputArea.style.display = 'inline';
+        } else if (pType === 'EV감지기') {
+          stairArea.style.display = 'inline';
+        }
       }
     }
 
@@ -197,57 +298,125 @@
 
     async function registerAlarmEvent() {
       const aType = document.getElementById('alarmType').value;
-      const time = document.getElementById('eventTime').value;
+      const timeVal = document.getElementById('eventTime').value;
       const dong = document.getElementById('dongSelect').value;
       const pType = document.getElementById('placeType').value;
-      const stair = document.getElementById('stair').value;
-      const floor = document.getElementById('floor').value;
-      const detailPlace = document.getElementById('detailPlace').value;
+      const stair = document.getElementById('stairSelect').value;
+      const floorVal = parseInt(document.getElementById('floorInput').value, 10);
+      const stairRange = document.getElementById('stairRangeSelect').value;
+      const manageFloor = document.getElementById('manageFloorSelect').value;
+      const parkingDetail = document.getElementById('parkingDetail').value.trim();
 
-      if (!time) { alert('발생일시를 입력하세요.'); return; }
+      if (!timeVal) { alert('발생일시를 입력하세요.'); return; }
+      const dateOnly = timeVal.split('T')[0]; // YYYY-MM-DD
 
-      const formattedTime = time.replace('T', ' ');
-
-      if (pType === '세대') {
-        if (!floor) { alert('층수를 입력하세요.'); return; }
-        const start = (stair === '1계단') ? 1 : 5;
-        const end = (stair === '1계단') ? 4 : 8;
-
-        for (let i = start; i <= end; i++) {
-          const unitNo = `${floor}${String(i).padStart(2, '0')}`;
-          const loc = `[ ${dong.replace('동','')} - ${unitNo}호 ] 세대 (${dong} ${stair} ${floor}층)`;
+      if (dong === '관리동') {
+        if (pType === '소화전') {
           await fetch(`${DB_URL}/pending.json`, {
             method: 'POST',
             body: JSON.stringify({
               type: aType,
-              eventTime: formattedTime,
-              location: loc,
-              category: '세대'
+              eventTime: dateOnly,
+              location: `관리동 소화전 ${manageFloor}`,
+              category: '관리동소화전'
+            })
+          });
+        } else {
+          await fetch(`${DB_URL}/pending.json`, {
+            method: 'POST',
+            body: JSON.stringify({
+              type: aType,
+              eventTime: dateOnly,
+              location: `관리동 계단감지기 PH1`,
+              category: '관리동계단'
             })
           });
         }
-      } else {
-        let locName = "";
-        let cat = pType;
-        if (pType === '계단') {
-          locName = `${dong} ${stair} ${floor || ''}층 계단`;
-        } else if (pType === 'EV') {
-          locName = `${dong} ${stair} PH1 E/V실`;
-        } else if (pType === '프리액션TS') {
-          locName = `프리액션 T/S ${dong} ${stair} ${floor || ''}층`;
-        } else {
-          locName = `${dong} ${detailPlace || ''}`.trim();
-        }
-
+      } else if (dong === '지하주차장') {
+        const fullLoc = `지하주차장 ${parkingDetail || ''}`.trim();
         await fetch(`${DB_URL}/pending.json`, {
           method: 'POST',
           body: JSON.stringify({
             type: aType,
-            eventTime: formattedTime,
-            location: locName,
-            category: cat
+            eventTime: dateOnly,
+            location: fullLoc,
+            category: `지하_${pType}`
           })
         });
+      } else {
+        // 201동 ~ 206동
+        const config = DONG_CONFIG[dong];
+        
+        if (pType === '세대') {
+          if (!floorVal || isNaN(floorVal) || floorVal < 1) {
+            alert('층수를 올바르게 입력해주세요.');
+            return;
+          }
+
+          // 층수 유효성 검사 (피난약자 및 설계 층수 기준)
+          let maxF = config.maxFloor;
+          if (dong === '203동') {
+            maxF = config.stairMaxFloor[stair] || 18;
+          }
+          if (floorVal > maxF) {
+            alert(`[오류] ${dong} ${stair}은(는) 최고 ${maxF}층까지만 존재합니다. 층수를 다시 확인해주세요.`);
+            return;
+          }
+
+          const startUnit = (stair === '1계단') ? 1 : 5;
+          const endUnit = (stair === '1계단') ? 4 : 8;
+          const locationName = `${dong} ${stair} ${floorVal}층`;
+
+          for (let i = startUnit; i <= endUnit; i++) {
+            const unitNo = `${floorVal}${String(i).padStart(2, '0')}`;
+            await fetch(`${DB_URL}/pending.json`, {
+              method: 'POST',
+              body: JSON.stringify({
+                type: aType,
+                eventTime: dateOnly,
+                location: locationName,
+                unit: `${dong} ${unitNo}호`,
+                floor: floorVal,
+                category: '세대'
+              })
+            });
+          }
+        } else if (pType === '계단감지기') {
+          // 범위 분리 (예: 3F~8F -> 3층, 8층)
+          const floors = stairRange.replace(/F/g, '').split('~').map(s => s.trim());
+          for (const f of floors) {
+            await fetch(`${DB_URL}/pending.json`, {
+              method: 'POST',
+              body: JSON.stringify({
+                type: aType,
+                eventTime: dateOnly,
+                location: `${dong} ${stair} ${f}층 계단`,
+                category: '계단'
+              })
+            });
+          }
+        } else if (pType === 'EV감지기') {
+          await fetch(`${DB_URL}/pending.json`, {
+            method: 'POST',
+            body: JSON.stringify({
+              type: aType,
+              eventTime: dateOnly,
+              location: `${dong} ${stair} PH1 E/V실`,
+              category: 'EV'
+            })
+          });
+        } else if (pType === '프리액션TS') {
+          if (!floorVal || isNaN(floorVal)) { alert('층수를 입력해주세요.'); return; }
+          await fetch(`${DB_URL}/pending.json`, {
+            method: 'POST',
+            body: JSON.stringify({
+              type: aType,
+              eventTime: dateOnly,
+              location: `프리액션 T/S ${dong} ${stair} ${floorVal}층`,
+              category: '프리액션TS'
+            })
+          });
+        }
       }
       loadData();
     }
@@ -260,10 +429,28 @@
         return;
       }
 
-      const actions = Array.from(checkedBoxes).map(cb => cb.value).join(', ');
+      const target = pendingData[key];
+      const unitPrefix = target.unit ? `[ ${target.unit} ] ` : '';
+      
+      const actionsArr = [];
+      checkedBoxes.forEach(cb => {
+        let text = cb.value;
+        // 16층 이상 방 개수 선택 반영
+        if (target.floor >= 16) {
+          if (cb.value.includes('침실1')) {
+            const count = row.querySelector('.bed1-count')?.value || '1';
+            text = `세대 침실1 차동식감지기 ${count}개 교체`;
+          } else if (cb.value.includes('침실2')) {
+            const count = row.querySelector('.bed2-count')?.value || '1';
+            text = `세대 침실2 차동식감지기 ${count}개 교체`;
+          }
+        }
+        actionsArr.push(unitPrefix + text);
+      });
+
+      const fullActionText = actionsArr.join(', ');
       const cause = row.querySelector('.cause-select').value;
       const processDate = row.querySelector('.process-date-input').value || new Date().toISOString().slice(0, 10);
-      const target = pendingData[key];
 
       await fetch(`${DB_URL}/history.json`, {
         method: 'POST',
@@ -272,12 +459,18 @@
           eventTime: target.eventTime,
           location: target.location,
           cause: cause,
-          actions: actions,
+          actions: fullActionText,
           processDate: processDate,
           remarks: ''
         })
       });
 
+      await fetch(`${DB_URL}/pending/${key}.json`, { method: 'DELETE' });
+      loadData();
+    }
+
+    async function deletePendingTask(key) {
+      if (!confirm('대기 목록에서 삭제하시겠습니까?')) return;
       await fetch(`${DB_URL}/pending/${key}.json`, { method: 'DELETE' });
       loadData();
     }
@@ -338,47 +531,81 @@
       pList.innerHTML = pKeys.map(k => {
         const item = pendingData[k];
         const cat = item.category || '세대';
-        const isTS = cat === '프리액션TS' || (item.location && item.location.includes('T/S'));
+        const isTS = cat === '프리액션TS' || cat === '지하_프리액션TS' || (item.location && item.location.includes('T/S'));
+        const isNonDetector = isTS || cat === '지하_발신기' || cat === '관리동소화전';
 
+        // 1. 발생원인 옵션
         let causeOptions = '';
-        if (isTS) {
+        if (isNonDetector) {
           causeOptions = `<option value="작동이상">작동이상</option>`;
         } else {
           causeOptions = `
-            <option value="감지기 오작동">감지기 오작동 (점등 확인)</option>
-            <option value="작동이상(원인 불명)">작동이상 (미점등/원인불명)</option>
-            <option value="설비 오작동">설비 오작동</option>
+            <option value="감지기 오작동">감지기 오작동</option>
+            <option value="차동식 감지기 오작동">차동식 감지기 오작동</option>
+            <option value="정온식 감지기 오작동">정온식 감지기 오작동</option>
+            <option value="작동이상(원인 불명)">작동이상(원인 불명)</option>
           `;
         }
 
+        // 2. 조치사항 체크박스 옵션
         let actionOptions = '';
+        const unitTag = item.unit ? `[${item.unit}] ` : '';
+
         if (cat === '세대') {
+          const isHighFloor = (item.floor >= 16);
+          const totalText = isHighFloor ? '세대 감지기 전체 교체(6개)' : '세대 감지기 전체 교체';
+          
+          let bedCountHtml = '';
+          if (isHighFloor) {
+            bedCountHtml = `
+              <label style="margin-left: 8px;">
+                <input type="checkbox" value="침실1 차동식감지기 교체"> 침실1 차동식
+                <select class="bed1-count" style="font-size:0.7rem; padding:1px 3px;"><option value="1">1개</option><option value="2">2개</option></select>
+              </label>
+              <label style="margin-left: 8px;">
+                <input type="checkbox" value="침실2 차동식감지기 교체"> 침실2 차동식
+                <select class="bed2-count" style="font-size:0.7rem; padding:1px 3px;"><option value="1">1개</option><option value="2">2개</option></select>
+              </label>
+            `;
+          } else {
+            bedCountHtml = `
+              <label><input type="checkbox" value="세대 침실1 차동식감지기 교체"> ${unitTag}세대 침실1 차동식감지기 교체</label>
+              <label><input type="checkbox" value="세대 침실2 차동식감지기 교체"> ${unitTag}세대 침실2 차동식감지기 교체</label>
+            `;
+          }
+
           actionOptions = `
-            <label><input type="checkbox" value="세대 감지기 전체 교체"> 세대 감지기 전체 교체</label>
-            <label><input type="checkbox" value="침실1 차동식감지기 교체"> 침실1 차동식감지기 교체</label>
-            <label><input type="checkbox" value="침실2 차동식감지기 교체"> 침실2 차동식감지기 교체</label>
-            <label><input type="checkbox" value="주방 정온식감지기 교체"> 주방 정온식감지기 교체</label>
+            <label><input type="checkbox" value="${totalText}"> ${unitTag}${totalText}</label>
+            ${bedCountHtml}
+            <label><input type="checkbox" value="세대 주방 정온식감지기 교체"> ${unitTag}세대 주방 정온식감지기 교체</label>
+            <label><input type="checkbox" value="교체 불필요"> ${unitTag}교체 불필요</label>
+            <label><input type="checkbox" value="보수요청"> ${unitTag}보수요청</label>
+          `;
+        } else if (cat === '계단' || cat === 'EV' || cat === '관리동계단') {
+          actionOptions = `
+            <label><input type="checkbox" value="광전식감지기 교체"> 광전식감지기 교체</label>
             <label><input type="checkbox" value="교체 불필요"> 교체 불필요</label>
             <label><input type="checkbox" value="보수요청"> 보수요청</label>
           `;
-        } else if (cat === '계단') {
+        } else if (cat === '프리액션TS' || cat === '지하_프리액션TS') {
           actionOptions = `
-            <label><input type="checkbox" value="계단 광전식감지기 교체"> 계단 광전식감지기 교체</label>
-            <label><input type="checkbox" value="교체 불필요"> 교체 불필요</label>
+            <label><input type="checkbox" value="보수요청" checked> 보수요청</label>
+          `;
+        } else if (cat === '지하_발신기') {
+          actionOptions = `
+            <label><input type="checkbox" value="발신기 점검 및 복구"> 발신기 점검 및 복구</label>
             <label><input type="checkbox" value="보수요청"> 보수요청</label>
           `;
-        } else if (isTS) {
+        } else if (cat === '지하_감지기') {
           actionOptions = `
-            <label><input type="checkbox" value="T/S 밸브 점검 및 복구"> T/S 밸브 점검 및 복구</label>
-            <label><input type="checkbox" value="스위치 교체"> T/S 스위치 교체</label>
+            <label><input type="checkbox" value="차동식감지기 교체"> 차동식감지기 교체</label>
+            <label><input type="checkbox" value="차동식감지기(방수형) 교체"> 차동식감지기(방수형) 교체</label>
+            <label><input type="checkbox" value="교체 불필요"> 교체 불필요</label>
             <label><input type="checkbox" value="보수요청"> 보수요청</label>
           `;
         } else {
           actionOptions = `
-            <label><input type="checkbox" value="차동식감지기 교체"> 차동식감지기 교체</label>
-            <label><input type="checkbox" value="광전식감지기 교체"> 광전식감지기 교체</label>
-            <label><input type="checkbox" value="발신기 점검 및 복구"> 발신기 점검 및 복구</label>
-            <label><input type="checkbox" value="교체 불필요"> 교체 불필요</label>
+            <label><input type="checkbox" value="점검 및 수리"> 점검 및 수리</label>
             <label><input type="checkbox" value="보수요청"> 보수요청</label>
           `;
         }
@@ -397,10 +624,14 @@
               <div class="checkbox-group">${actionOptions}</div>
               <button style="margin-top:6px; width:100%; font-size:0.75rem; padding:4px;" onclick="completeTask('${k}')">✔ 조치 완료 처리</button>
             </td>
+            <td>
+              <button class="del-btn" onclick="deletePendingTask('${k}')">삭제</button>
+            </td>
           </tr>
         `;
       }).join('');
 
+      // 이력 대장 정렬
       const sortedHistoryKeys = hKeys.sort((a, b) => new Date(historyData[a].eventTime || 0) - new Date(historyData[b].eventTime || 0));
 
       hList.innerHTML = sortedHistoryKeys.map(k => {
@@ -467,156 +698,156 @@
       }
 
       const defaultData = [
-        {"type":"비화재보","eventTime":"2024-01-08 00:00","location":"204동 B 25층","cause":"차동식 감지기 오작동","actions":"[ 204 - 2506호 ] 세대 침실2 차동식 감지기 교체 완료","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-01-15 00:00","location":"203동 B 11층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1107호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-01-25 00:00","location":"203동 B 4층","cause":"차동식 감지기 오작동","actions":"[ 203 - 0407호 ] 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-03-06 00:00","location":"203동 A 3층","cause":"차동식 감지기 오작동","actions":"[ 203 - 0302호 ] 세대 침실2 차동식 감지기 교체 완료","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-03-08 00:00","location":"204동 A 10층","cause":"감지기 오작동","actions":"[ 204 - 1001호 ] 세대 감지기 전체 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-03-08 00:00","location":"204동 A 10층","cause":"감지기 오작동","actions":"[ 204 - 1002호 ] 세대 감지기 전체 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-03-08 00:00","location":"204동 A 10층","cause":"감지기 오작동","actions":"[ 204 - 1003호 ] 세대 감지기 전체 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-03-08 00:00","location":"204동 A 10층","cause":"감지기 오작동","actions":"[ 204 - 1004호 ] 세대 감지기 전체 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-03-08 00:00","location":"203동 A 5층 ","cause":"감지기 오작동","actions":"[ 203 - 502호 ] 세대 감지기 전체 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-03-08 00:00","location":"205동 5층 ","cause":"감지기 오작동","actions":"[ 205 - 0502호 ] 세대 감지기 전체 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-03-11 00:00","location":"203동 A 5층 ","cause":"차동식 감지기 오작동","actions":"[ 203 - 0503호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-03-29 00:00","location":"지하3층 C1주차장","cause":"차동식 감지기 오작동","actions":"지하3층 주차장 C1-12 기둥 앞 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-04-26 00:00","location":"205동 5층 ","cause":"차동식 감지기 오작동","actions":"[ 205 - 0503호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-06-16 00:00","location":"205동 25층","cause":"감지기 오작동","actions":"[ 205 - 2502호 ] 세대 감지기 전체 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-06-16 00:00","location":"205동 25층","cause":"감지기 오작동","actions":"[ 205 - 2504호 ] 세대 감지기 전체 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-06-18 00:00","location":"지하2층 B주차장","cause":"차동식 감지기 오작동","actions":"지하2층 주차장 B04 기둥 앞 차동식감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-06-25 00:00","location":"지하2층 B주차장","cause":"차동식 감지기 오작동","actions":"지하2층 주차장 B14 기둥 앞 차동식감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-01 00:00","location":"203동 1계단 15층","cause":"감지기 오작동","actions":"[ 203 - 1502호 ] 세대 감지기 전체 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-02 00:00","location":"203동 1계단 15층","cause":"감지기 오작동","actions":"[ 203 - 1504호 ] 세대 감지기 전체 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-02 00:00","location":"203동 1계단 15층","cause":"감지기 오작동","actions":"[ 203 - 1503호 ] 세대 감지기 전체 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-07 00:00","location":"203동 2계단 4층","cause":"차동식 감지기 오작동","actions":"[ 203 - 0407호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-07 00:00","location":"203동 1계단 15층","cause":"감지기 오작동","actions":"[ 203 - 1501호 ] 세대 감지기 전체 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-08 00:00","location":"203동 2계단 4층","cause":"차동식 감지기 오작동","actions":"[ 203 - 0408호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-08 00:00","location":"203동 2계단 4층","cause":"차동식 감지기 오작동","actions":"[ 203 - 0405호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-08 00:00","location":"203동 2계단 4층","cause":"감지기 오작동","actions":"[ 203 - 0406호 ] 세대 감지기 전체 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-09 00:00","location":"203동 2계단 4층","cause":"정온식 감지기 오작동","actions":"[ 203 - 0405호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-10 00:00","location":"202동 1계단 23층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2302호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-10 00:00","location":"202동 1계단 23층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2304호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-10 00:00","location":"202동 1계단 23층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2303호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-10 00:00","location":"202동 1계단 23층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2303호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-10 00:00","location":"202동 1계단 23층","cause":"정온식 감지기 오작동","actions":"[ 202 - 2303호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-10 00:00","location":"202동 1계단 23층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2304호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-10 00:00","location":"202동 1계단 23층","cause":"정온식 감지기 오작동","actions":"[ 202 - 2304호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-11 00:00","location":"204동 2계단 4층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0407호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-11 00:00","location":"204동 2계단 4층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0407호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-11 00:00","location":"204동 2계단 4층","cause":"정온식 감지기 오작동","actions":"[ 204 - 0407호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-11 00:00","location":"204동 2계단 4층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0408호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-11 00:00","location":"204동 2계단 4층","cause":"정온식 감지기 오작동","actions":"[ 204 - 0408호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-11 00:00","location":"204동 2계단 4층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0405호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-11 00:00","location":"204동 2계단 4층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0405호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-11 00:00","location":"204동 2계단 4층","cause":"정온식 감지기 오작동","actions":"[ 204 - 0405호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-11 00:00","location":"204동 2계단 4층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0406호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-11 00:00","location":"204동 2계단 4층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0406호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-11 00:00","location":"204동 2계단 4층","cause":"정온식 감지기 오작동","actions":"[ 204 - 0406호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-15 00:00","location":"204동 2계단 4층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0408호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-16 00:00","location":"202동 1계단 23층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2301호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-16 00:00","location":"202동 1계단 23층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2301호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-16 00:00","location":"202동 1계단 23층","cause":"정온식 감지기 오작동","actions":"[ 202 - 2301호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-16 00:00","location":"202동 1계단 23층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2302호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-16 00:00","location":"202동 1계단 23층","cause":"정온식 감지기 오작동","actions":"[ 202 - 2302호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-18 00:00","location":"203동 1계단 10층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1002호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-22 00:00","location":"203동 1계단 10층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1001호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-22 00:00","location":"203동 1계단 10층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1001호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-22 00:00","location":"203동 1계단 10층","cause":"정온식 감지기 오작동","actions":"[ 203 - 1001호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-22 00:00","location":"203동 1계단 10층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1003호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-22 00:00","location":"203동 1계단 10층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1003호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-22 00:00","location":"203동 1계단 10층","cause":"정온식 감지기 오작동","actions":"[ 203 - 1003호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-22 00:00","location":"203동 1계단 10층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1004호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-22 00:00","location":"203동 1계단 10층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1004호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-22 00:00","location":"203동 1계단 10층","cause":"정온식 감지기 오작동","actions":"[ 203 - 1004호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-22 00:00","location":"203동 1계단 10층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1002호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-22 00:00","location":"203동 1계단 10층","cause":"정온식 감지기 오작동","actions":"[ 203 - 1002호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-23 00:00","location":"202동 2계단 25층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2505호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-23 00:00","location":"202동 2계단 25층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2505호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-23 00:00","location":"202동 2계단 25층","cause":"정온식 감지기 오작동","actions":"[ 202 - 2505호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-23 00:00","location":"202동 2계단 25층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2506호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-23 00:00","location":"202동 2계단 25층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2506호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-23 00:00","location":"202동 2계단 25층","cause":"정온식 감지기 오작동","actions":"[ 202 - 2506호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-23 00:00","location":"202동 2계단 25층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2507호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-23 00:00","location":"202동 2계단 25층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2507호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-23 00:00","location":"202동 2계단 25층","cause":"정온식 감지기 오작동","actions":"[ 202 - 2507호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-23 00:00","location":"202동 2계단 25층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2508호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-23 00:00","location":"202동 2계단 25층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2508호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-07-23 00:00","location":"202동 2계단 25층","cause":"정온식 감지기 오작동","actions":"[ 202 - 2508호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-01 00:00","location":"지하3층 A주차장","cause":"차동식 감지기 오작동","actions":"지하3층 주차장 A07 기둥 앞 차동식감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-01 00:00","location":"지하3층 A주차장","cause":"차동식 감지기 오작동","actions":"지하3층 주차장 A08 기둥 앞 차동식감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-06 00:00","location":"206동 1계단 17층","cause":"차동식 감지기 오작동","actions":"[ 206 - 1702호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-06 00:00","location":"206동 1계단 17층","cause":"차동식 감지기 오작동","actions":"[ 206 - 1702호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-06 00:00","location":"206동 1계단 17층","cause":"정온식 감지기 오작동","actions":"[ 206 - 1702호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-06 00:00","location":"206동 1계단 17층","cause":"차동식 감지기 오작동","actions":"[ 206 - 1703호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-06 00:00","location":"206동 1계단 17층","cause":"차동식 감지기 오작동","actions":"[ 206 - 1703호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-06 00:00","location":"206동 1계단 17층","cause":"정온식 감지기 오작동","actions":"[ 206 - 1703호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-06 00:00","location":"206동 1계단 17층","cause":"차동식 감지기 오작동","actions":"[ 206 - 1704호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-06 00:00","location":"206동 1계단 17층","cause":"차동식 감지기 오작동","actions":"[ 206 - 1704호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-06 00:00","location":"206동 1계단 17층","cause":"정온식 감지기 오작동","actions":"[ 206 - 1704호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-08 00:00","location":"206동 1계단 17층","cause":"차동식 감지기 오작동","actions":"[ 206 - 1701호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-08 00:00","location":"206동 1계단 17층","cause":"차동식 감지기 오작동","actions":"[ 206 - 1701호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-08 00:00","location":"206동 1계단 17층","cause":"정온식 감지기 오작동","actions":"[ 206 - 1701호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-11 00:00","location":"204동 2계단 7층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0707호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-12 00:00","location":"204동 2계단 7층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0705호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-12 00:00","location":"204동 2계단 7층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0705호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-12 00:00","location":"204동 2계단 7층","cause":"정온식 감지기 오작동","actions":"[ 204 - 0705호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-12 00:00","location":"204동 2계단 7층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0706호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-12 00:00","location":"204동 2계단 7층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0706호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-12 00:00","location":"204동 2계단 7층","cause":"정온식 감지기 오작동","actions":"[ 204 - 0706호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-12 00:00","location":"204동 2계단 7층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0707호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-12 00:00","location":"204동 2계단 7층","cause":"정온식 감지기 오작동","actions":"[ 204 - 0707호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-13 00:00","location":"204동 2계단 7층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0708호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-13 00:00","location":"204동 2계단 7층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0708호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-13 00:00","location":"204동 2계단 7층","cause":"정온식 감지기 오작동","actions":"[ 204 - 0708호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-20 00:00","location":"202동 1계단 14층","cause":"차동식 감지기 오작동","actions":"[ 202 - 1403호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-20 00:00","location":"202동 1계단 14층","cause":"차동식 감지기 오작동","actions":"[ 202 - 1403호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-20 00:00","location":"202동 1계단 14층","cause":"정온식 감지기 오작동","actions":"[ 202 - 1403호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-20 00:00","location":"202동 1계단 14층","cause":"차동식 감지기 오작동","actions":"[ 202 - 1404호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-20 00:00","location":"202동 1계단 14층","cause":"차동식 감지기 오작동","actions":"[ 202 - 1404호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-20 00:00","location":"202동 1계단 14층","cause":"정온식 감지기 오작동","actions":"[ 202 - 1404호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-21 00:00","location":"202동 1계단 14층","cause":"차동식 감지기 오작동","actions":"[ 202 - 1401호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-21 00:00","location":"202동 1계단 14층","cause":"차동식 감지기 오작동","actions":"[ 202 - 1401호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-21 00:00","location":"202동 1계단 14층","cause":"정온식 감지기 오작동","actions":"[ 202 - 1401호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-21 00:00","location":"202동 1계단 14층","cause":"차동식 감지기 오작동","actions":"[ 202 - 1402호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-21 00:00","location":"202동 1계단 14층","cause":"차동식 감지기 오작동","actions":"[ 202 - 1402호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-21 00:00","location":"202동 1계단 14층","cause":"정온식 감지기 오작동","actions":"[ 202 - 1402호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-22 00:00","location":"201동 2계단 15층","cause":"차동식 감지기 오작동","actions":"[ 201 - 1507호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-22 00:00","location":"201동 2계단 15층","cause":"차동식 감지기 오작동","actions":"[ 201 - 1507호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-22 00:00","location":"201동 2계단 15층","cause":"정온식 감지기 오작동","actions":"[ 201 - 1507호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-22 00:00","location":"201동 2계단 15층","cause":"차동식 감지기 오작동","actions":"[ 201 - 1508호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-22 00:00","location":"201동 2계단 15층","cause":"차동식 감지기 오작동","actions":"[ 201 - 1508호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-22 00:00","location":"201동 2계단 15층","cause":"정온식 감지기 오작동","actions":"[ 201 - 1508호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-26 00:00","location":"201동 2계단 15층","cause":"차동식 감지기 오작동","actions":"[ 201 - 1505호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-26 00:00","location":"201동 2계단 15층","cause":"차동식 감지기 오작동","actions":"[ 201 - 1505호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-26 00:00","location":"201동 2계단 15층","cause":"정온식 감지기 오작동","actions":"[ 201 - 1505호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-26 00:00","location":"201동 2계단 15층","cause":"차동식 감지기 오작동","actions":"[ 201 - 1506호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-26 00:00","location":"201동 2계단 15층","cause":"차동식 감지기 오작동","actions":"[ 201 - 1506호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-08-26 00:00","location":"201동 2계단 15층","cause":"정온식 감지기 오작동","actions":"[ 201 - 1506호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-09-02 00:00","location":"203동 1계단 18층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1802호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-09-02 00:00","location":"203동 1계단 18층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1802호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-09-02 00:00","location":"203동 1계단 18층","cause":"정온식 감지기 오작동","actions":"[ 203 - 1802호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-09-02 00:00","location":"203동 1계단 18층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1803호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-09-02 00:00","location":"203동 1계단 18층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1803호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-09-02 00:00","location":"203동 1계단 18층","cause":"정온식 감지기 오작동","actions":"[ 203 - 1803호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-09-02 00:00","location":"203동 1계단 18층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1804호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-09-02 00:00","location":"203동 1계단 18층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1804호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-09-02 00:00","location":"203동 1계단 18층","cause":"정온식 감지기 오작동","actions":"[ 203 - 1804호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-09-03 00:00","location":"203동 1계단 18층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1801호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-09-03 00:00","location":"203동 1계단 18층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1801호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-09-03 00:00","location":"203동 1계단 18층","cause":"정온식 감지기 오작동","actions":"[ 203 - 1801호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-09-05 00:00","location":"203동 1계단 3층","cause":"차동식 감지기 오작동","actions":"[ 203 - 0303호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-09-05 00:00","location":"203동 1계단 3층","cause":"차동식 감지기 오작동","actions":"[ 203 - 0303호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-09-05 00:00","location":"203동 1계단 3층","cause":"정온식 감지기 오작동","actions":"[ 203 - 0303호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-09-05 00:00","location":"203동 1계단 3층","cause":"차동식 감지기 오작동","actions":"[ 203 - 0304호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-09-05 00:00","location":"203동 1계단 3층","cause":"차동식 감지기 오작동","actions":"[ 203 - 0304호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-09-05 00:00","location":"203동 1계단 3층","cause":"정온식 감지기 오작동","actions":"[ 203 - 0304호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-09-06 00:00","location":"203동 1계단 3층","cause":"차동식 감지기 오작동","actions":"[ 203 - 0301호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-09-06 00:00","location":"203동 1계단 3층","cause":"차동식 감지기 오작동","actions":"[ 203 - 0301호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-09-06 00:00","location":"203동 1계단 3층","cause":"정온식 감지기 오작동","actions":"[ 203 - 0301호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-09-06 00:00","location":"203동 1계단 3층","cause":"차동식 감지기 오작동","actions":"[ 203 - 0302호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-09-06 00:00","location":"203동 1계단 3층","cause":"정온식 감지기 오작동","actions":"[ 203 - 0302호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-09-09 00:00","location":"206동 1계단 15층","cause":"차동식 감지기 오작동","actions":"[ 206 - 1501호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-09-09 00:00","location":"206동 1계단 15층","cause":"차동식 감지기 오작동","actions":"[ 206 - 1501호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
-        {"type":"비화재보","eventTime":"2024-09-09 00:00","location":"206동 1계단 15층","cause":"정온식 감지기 오작동","actions":"[ 206 - 1501호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""}
+        {"type":"비화재보","eventTime":"2024-01-08","location":"204동 B 25층","cause":"차동식 감지기 오작동","actions":"[ 204 - 2506호 ] 세대 침실2 차동식 감지기 교체 완료","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-01-15","location":"203동 B 11층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1107호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-01-25","location":"203동 B 4층","cause":"차동식 감지기 오작동","actions":"[ 203 - 0407호 ] 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-03-06","location":"203동 A 3층","cause":"차동식 감지기 오작동","actions":"[ 203 - 0302호 ] 세대 침실2 차동식 감지기 교체 완료","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-03-08","location":"204동 A 10층","cause":"감지기 오작동","actions":"[ 204 - 1001호 ] 세대 감지기 전체 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-03-08","location":"204동 A 10층","cause":"감지기 오작동","actions":"[ 204 - 1002호 ] 세대 감지기 전체 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-03-08","location":"204동 A 10층","cause":"감지기 오작동","actions":"[ 204 - 1003호 ] 세대 감지기 전체 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-03-08","location":"204동 A 10층","cause":"감지기 오작동","actions":"[ 204 - 1004호 ] 세대 감지기 전체 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-03-08","location":"203동 A 5층","cause":"감지기 오작동","actions":"[ 203 - 502호 ] 세대 감지기 전체 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-03-08","location":"205동 5층","cause":"감지기 오작동","actions":"[ 205 - 0502호 ] 세대 감지기 전체 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-03-11","location":"203동 A 5층","cause":"차동식 감지기 오작동","actions":"[ 203 - 0503호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-03-29","location":"지하3층 C1주차장","cause":"차동식 감지기 오작동","actions":"지하3층 주차장 C1-12 기둥 앞 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-04-26","location":"205동 5층","cause":"차동식 감지기 오작동","actions":"[ 205 - 0503호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-06-16","location":"205동 25층","cause":"감지기 오작동","actions":"[ 205 - 2502호 ] 세대 감지기 전체 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-06-16","location":"205동 25층","cause":"감지기 오작동","actions":"[ 205 - 2504호 ] 세대 감지기 전체 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-06-18","location":"지하2층 B주차장","cause":"차동식 감지기 오작동","actions":"지하2층 주차장 B04 기둥 앞 차동식감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-06-25","location":"지하2층 B주차장","cause":"차동식 감지기 오작동","actions":"지하2층 주차장 B14 기둥 앞 차동식감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-01","location":"203동 1계단 15층","cause":"감지기 오작동","actions":"[ 203 - 1502호 ] 세대 감지기 전체 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-02","location":"203동 1계단 15층","cause":"감지기 오작동","actions":"[ 203 - 1504호 ] 세대 감지기 전체 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-02","location":"203동 1계단 15층","cause":"감지기 오작동","actions":"[ 203 - 1503호 ] 세대 감지기 전체 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-07","location":"203동 2계단 4층","cause":"차동식 감지기 오작동","actions":"[ 203 - 0407호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-07","location":"203동 1계단 15층","cause":"감지기 오작동","actions":"[ 203 - 1501호 ] 세대 감지기 전체 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-08","location":"203동 2계단 4층","cause":"차동식 감지기 오작동","actions":"[ 203 - 0408호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-08","location":"203동 2계단 4층","cause":"차동식 감지기 오작동","actions":"[ 203 - 0405호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-08","location":"203동 2계단 4층","cause":"감지기 오작동","actions":"[ 203 - 0406호 ] 세대 감지기 전체 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-09","location":"203동 2계단 4층","cause":"정온식 감지기 오작동","actions":"[ 203 - 0405호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-10","location":"202동 1계단 23층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2302호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-10","location":"202동 1계단 23층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2304호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-10","location":"202동 1계단 23층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2303호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-10","location":"202동 1계단 23층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2303호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-10","location":"202동 1계단 23층","cause":"정온식 감지기 오작동","actions":"[ 202 - 2303호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-10","location":"202동 1계단 23층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2304호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-10","location":"202동 1계단 23층","cause":"정온식 감지기 오작동","actions":"[ 202 - 2304호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-11","location":"204동 2계단 4층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0407호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-11","location":"204동 2계단 4층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0407호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-11","location":"204동 2계단 4층","cause":"정온식 감지기 오작동","actions":"[ 204 - 0407호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-11","location":"204동 2계단 4층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0408호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-11","location":"204동 2계단 4층","cause":"정온식 감지기 오작동","actions":"[ 204 - 0408호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-11","location":"204동 2계단 4층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0405호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-11","location":"204동 2계단 4층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0405호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-11","location":"204동 2계단 4층","cause":"정온식 감지기 오작동","actions":"[ 204 - 0405호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-11","location":"204동 2계단 4층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0406호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-11","location":"204동 2계단 4층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0406호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-11","location":"204동 2계단 4층","cause":"정온식 감지기 오작동","actions":"[ 204 - 0406호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-15","location":"204동 2계단 4층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0408호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-16","location":"202동 1계단 23층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2301호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-16","location":"202동 1계단 23층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2301호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-16","location":"202동 1계단 23층","cause":"정온식 감지기 오작동","actions":"[ 202 - 2301호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-16","location":"202동 1계단 23층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2302호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-16","location":"202동 1계단 23층","cause":"정온식 감지기 오작동","actions":"[ 202 - 2302호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-18","location":"203동 1계단 10층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1002호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-22","location":"203동 1계단 10층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1001호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-22","location":"203동 1계단 10층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1001호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-22","location":"203동 1계단 10층","cause":"정온식 감지기 오작동","actions":"[ 203 - 1001호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-22","location":"203동 1계단 10층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1003호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-22","location":"203동 1계단 10층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1003호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-22","location":"203동 1계단 10층","cause":"정온식 감지기 오작동","actions":"[ 203 - 1003호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-22","location":"203동 1계단 10층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1004호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-22","location":"203동 1계단 10층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1004호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-22","location":"203동 1계단 10층","cause":"정온식 감지기 오작동","actions":"[ 203 - 1004호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-22","location":"203동 1계단 10층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1002호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-22","location":"203동 1계단 10층","cause":"정온식 감지기 오작동","actions":"[ 203 - 1002호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-23","location":"202동 2계단 25층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2505호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-23","location":"202동 2계단 25층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2505호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-23","location":"202동 2계단 25층","cause":"정온식 감지기 오작동","actions":"[ 202 - 2505호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-23","location":"202동 2계단 25층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2506호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-23","location":"202동 2계단 25층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2506호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-23","location":"202동 2계단 25층","cause":"정온식 감지기 오작동","actions":"[ 202 - 2506호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-23","location":"202동 2계단 25층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2507호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-23","location":"202동 2계단 25층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2507호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-23","location":"202동 2계단 25층","cause":"정온식 감지기 오작동","actions":"[ 202 - 2507호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-23","location":"202동 2계단 25층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2508호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-23","location":"202동 2계단 25층","cause":"차동식 감지기 오작동","actions":"[ 202 - 2508호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-07-23","location":"202동 2계단 25층","cause":"정온식 감지기 오작동","actions":"[ 202 - 2508호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-01","location":"지하3층 A주차장","cause":"차동식 감지기 오작동","actions":"지하3층 주차장 A07 기둥 앞 차동식감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-01","location":"지하3층 A주차장","cause":"차동식 감지기 오작동","actions":"지하3층 주차장 A08 기둥 앞 차동식감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-06","location":"206동 1계단 17층","cause":"차동식 감지기 오작동","actions":"[ 206 - 1702호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-06","location":"206동 1계단 17층","cause":"차동식 감지기 오작동","actions":"[ 206 - 1702호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-06","location":"206동 1계단 17층","cause":"정온식 감지기 오작동","actions":"[ 206 - 1702호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-06","location":"206동 1계단 17층","cause":"차동식 감지기 오작동","actions":"[ 206 - 1703호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-06","location":"206동 1계단 17층","cause":"차동식 감지기 오작동","actions":"[ 206 - 1703호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-06","location":"206동 1계단 17층","cause":"정온식 감지기 오작동","actions":"[ 206 - 1703호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-06","location":"206동 1계단 17층","cause":"차동식 감지기 오작동","actions":"[ 206 - 1704호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-06","location":"206동 1계단 17층","cause":"차동식 감지기 오작동","actions":"[ 206 - 1704호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-06","location":"206동 1계단 17층","cause":"정온식 감지기 오작동","actions":"[ 206 - 1704호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-08","location":"206동 1계단 17층","cause":"차동식 감지기 오작동","actions":"[ 206 - 1701호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-08","location":"206동 1계단 17층","cause":"차동식 감지기 오작동","actions":"[ 206 - 1701호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-08","location":"206동 1계단 17층","cause":"정온식 감지기 오작동","actions":"[ 206 - 1701호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-11","location":"204동 2계단 7층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0707호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-12","location":"204동 2계단 7층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0705호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-12","location":"204동 2계단 7층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0705호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-12","location":"204동 2계단 7층","cause":"정온식 감지기 오작동","actions":"[ 204 - 0705호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-12","location":"204동 2계단 7층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0706호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-12","location":"204동 2계단 7층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0706호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-12","location":"204동 2계단 7층","cause":"정온식 감지기 오작동","actions":"[ 204 - 0706호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-12","location":"204동 2계단 7층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0707호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-12","location":"204동 2계단 7층","cause":"정온식 감지기 오작동","actions":"[ 204 - 0707호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-13","location":"204동 2계단 7층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0708호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-13","location":"204동 2계단 7층","cause":"차동식 감지기 오작동","actions":"[ 204 - 0708호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-13","location":"204동 2계단 7층","cause":"정온식 감지기 오작동","actions":"[ 204 - 0708호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-20","location":"202동 1계단 14층","cause":"차동식 감지기 오작동","actions":"[ 202 - 1403호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-20","location":"202동 1계단 14층","cause":"차동식 감지기 오작동","actions":"[ 202 - 1403호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-20","location":"202동 1계단 14층","cause":"정온식 감지기 오작동","actions":"[ 202 - 1403호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-20","location":"202동 1계단 14층","cause":"차동식 감지기 오작동","actions":"[ 202 - 1404호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-20","location":"202동 1계단 14층","cause":"차동식 감지기 오작동","actions":"[ 202 - 1404호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-20","location":"202동 1계단 14층","cause":"정온식 감지기 오작동","actions":"[ 202 - 1404호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-21","location":"202동 1계단 14층","cause":"차동식 감지기 오작동","actions":"[ 202 - 1401호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-21","location":"202동 1계단 14층","cause":"차동식 감지기 오작동","actions":"[ 202 - 1401호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-21","location":"202동 1계단 14층","cause":"정온식 감지기 오작동","actions":"[ 202 - 1401호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-21","location":"202동 1계단 14층","cause":"차동식 감지기 오작동","actions":"[ 202 - 1402호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-21","location":"202동 1계단 14층","cause":"차동식 감지기 오작동","actions":"[ 202 - 1402호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-21","location":"202동 1계단 14층","cause":"정온식 감지기 오작동","actions":"[ 202 - 1402호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-22","location":"201동 2계단 15층","cause":"차동식 감지기 오작동","actions":"[ 201 - 1507호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-22","location":"201동 2계단 15층","cause":"차동식 감지기 오작동","actions":"[ 201 - 1507호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-22","location":"201동 2계단 15층","cause":"정온식 감지기 오작동","actions":"[ 201 - 1507호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-22","location":"201동 2계단 15층","cause":"차동식 감지기 오작동","actions":"[ 201 - 1508호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-22","location":"201동 2계단 15층","cause":"차동식 감지기 오작동","actions":"[ 201 - 1508호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-22","location":"201동 2계단 15층","cause":"정온식 감지기 오작동","actions":"[ 201 - 1508호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-26","location":"201동 2계단 15층","cause":"차동식 감지기 오작동","actions":"[ 201 - 1505호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-26","location":"201동 2계단 15층","cause":"차동식 감지기 오작동","actions":"[ 201 - 1505호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-26","location":"201동 2계단 15층","cause":"정온식 감지기 오작동","actions":"[ 201 - 1505호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-26","location":"201동 2계단 15층","cause":"차동식 감지기 오작동","actions":"[ 201 - 1506호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-26","location":"201동 2계단 15층","cause":"차동식 감지기 오작동","actions":"[ 201 - 1506호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-08-26","location":"201동 2계단 15층","cause":"정온식 감지기 오작동","actions":"[ 201 - 1506호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-09-02","location":"203동 1계단 18층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1802호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-09-02","location":"203동 1계단 18층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1802호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-09-02","location":"203동 1계단 18층","cause":"정온식 감지기 오작동","actions":"[ 203 - 1802호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-09-02","location":"203동 1계단 18층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1803호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-09-02","location":"203동 1계단 18층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1803호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-09-02","location":"203동 1계단 18층","cause":"정온식 감지기 오작동","actions":"[ 203 - 1803호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-09-02","location":"203동 1계단 18층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1804호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-09-02","location":"203동 1계단 18층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1804호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-09-02","location":"203동 1계단 18층","cause":"정온식 감지기 오작동","actions":"[ 203 - 1804호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-09-03","location":"203동 1계단 18층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1801호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-09-03","location":"203동 1계단 18층","cause":"차동식 감지기 오작동","actions":"[ 203 - 1801호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-09-03","location":"203동 1계단 18층","cause":"정온식 감지기 오작동","actions":"[ 203 - 1801호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-09-05","location":"203동 1계단 3층","cause":"차동식 감지기 오작동","actions":"[ 203 - 0303호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-09-05","location":"203동 1계단 3층","cause":"차동식 감지기 오작동","actions":"[ 203 - 0303호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-09-05","location":"203동 1계단 3층","cause":"정온식 감지기 오작동","actions":"[ 203 - 0303호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-09-05","location":"203동 1계단 3층","cause":"차동식 감지기 오작동","actions":"[ 203 - 0304호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-09-05","location":"203동 1계단 3층","cause":"차동식 감지기 오작동","actions":"[ 203 - 0304호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-09-05","location":"203동 1계단 3층","cause":"정온식 감지기 오작동","actions":"[ 203 - 0304호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-09-06","location":"203동 1계단 3층","cause":"차동식 감지기 오작동","actions":"[ 203 - 0301호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-09-06","location":"203동 1계단 3층","cause":"차동식 감지기 오작동","actions":"[ 203 - 0301호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-09-06","location":"203동 1계단 3층","cause":"정온식 감지기 오작동","actions":"[ 203 - 0301호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-09-06","location":"203동 1계단 3층","cause":"차동식 감지기 오작동","actions":"[ 203 - 0302호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-09-06","location":"203동 1계단 3층","cause":"정온식 감지기 오작동","actions":"[ 203 - 0302호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-09-09","location":"206동 1계단 15층","cause":"차동식 감지기 오작동","actions":"[ 206 - 1501호 ] 세대 침실1 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-09-09","location":"206동 1계단 15층","cause":"차동식 감지기 오작동","actions":"[ 206 - 1501호 ] 세대 침실2 차동식 감지기 교체","processDate":"","remarks":""},
+        {"type":"비화재보","eventTime":"2024-09-09","location":"206동 1계단 15층","cause":"정온식 감지기 오작동","actions":"[ 206 - 1501호 ] 세대 주방 정온식 감지기 교체","processDate":"","remarks":""}
       ];
 
       for (const log of defaultData) {
@@ -629,7 +860,8 @@
       loadData();
     }
 
-    // 4초 주기 실시간 자동 동기화
+    // 초기화
+    onDongOrCategoryChange();
     setInterval(loadData, 4000);
     loadData();
   </script>
