@@ -83,7 +83,7 @@
 
   <script>
     // 본인의 Firebase Realtime Database URL로 변경 (끝에 슬래시 제외)
-    const DB_URL = "https://fire-detector-12345-default-rtdb.firebaseio.com/";
+    const DB_URL = "https://fire-detector-12345-default-rtdb.firebaseio.com";
 
     document.getElementById('eventTime').value = new Date().toISOString().slice(0, 16);
 
@@ -91,7 +91,7 @@
     let historyData = {};
 
     async function loadData() {
-      if (DB_URL.includes("여기에_데이터베이스")) return;
+      if (DB_URL.includes("https://fire-detector-12345-default-rtdb.firebaseio.com")) return;
       try {
         const [resPending, resHistory] = await Promise.all([
           fetch(`${DB_URL}/pending.json`),
